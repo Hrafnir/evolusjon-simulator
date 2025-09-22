@@ -3,669 +3,114 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Natural Selection Lab</title>
-  <style>
-    :root{
-      --bg:#0f172a;          /* slate-900 */
-      --panel:#111827;       /* gray-900 */
-      --muted:#334155;       /* slate-700 */
-      --text:#e5e7eb;        /* gray-200 */
-      --accent:#38bdf8;      /* sky-400 */
-      --good:#22c55e;        /* green-500 */
-      --warn:#f59e0b;        /* amber-500 */
-      --bad:#ef4444;         /* red-500 */
-      --card:#0b1220;        /* dark card */
-    }
-    *{box-sizing:border-box}
-    html,body{height:100%}
-    body{
-      margin:0;
-      background:linear-gradient(180deg, #0a0f1d, #0f172a);
-      color:var(--text);
-      font-family:system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji","Segoe UI Emoji";
-    }
-    .app{
-      display:grid;
-      grid-template-columns: 360px 1fr;
-      grid-template-rows: auto 1fr auto;
-      gap:12px;
-      height:100%;
-      padding:12px;
-    }
-    header, footer{
-      grid-column:1 / -1;
-      background:rgba(255,255,255,0.03);
-      border:1px solid rgba(255,255,255,0.06);
-      border-radius:16px;
-      padding:10px 14px;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      backdrop-filter: blur(6px);
-    }
-    header h1{
-      margin:0; font-size:18px; letter-spacing:0.2px; font-weight:700;
-    }
-    header small{opacity:.8}
-    .left{
-      background:rgba(255,255,255,0.03);
-      border:1px solid rgba(255,255,255,0.06);
-      border-radius:16px;
-      padding:12px;
-      overflow:auto;
-    }
-    .right{
-      display:grid;
-      grid-template-rows: 1fr 180px;
-      gap:12px;
-    }
-    .card{
-      background:var(--card);
-      border:1px solid rgba(255,255,255,0.06);
-      border-radius:16px;
-      padding:10px;
-    }
-    .panel{
-      display:grid; gap:8px;
-    }
-    .row{display:grid; grid-template-columns: 1fr auto; gap:8px; align-items:center;}
-    label{font-size:13px; opacity:.95}
-    input[type="range"]{width:180px}
-    input[type="color"]{width:40px; height:28px; padding:0; border:none; background:transparent}
-    .btn{
-      appearance:none; border:none; cursor:pointer; border-radius:12px;
-      padding:8px 12px; font-weight:600; color:#0b1220; background:var(--accent);
-    }
-    .btn.alt{background:#94a3b8;color:#0b1220}
-    .btn.ghost{background:transparent; color:var(--text); border:1px solid rgba(255,255,255,0.15)}
-    .btn:disabled{opacity:.5; cursor:not-allowed}
-    .btnbar{display:flex; flex-wrap:wrap; gap:8px}
-    .grid2{display:grid; grid-template-columns: 1fr 1fr; gap:8px}
-    canvas{width:100%; height:100%; display:block; border-radius:12px; background:#111}
-    .tiny{font-size:12px; opacity:.8}
-    .kpi{display:grid; grid-template-columns: repeat(5,1fr); gap:8px}
-    .kpi .card{padding:8px 10px}
-    .kpi h3{margin:0; font-size:12px; opacity:.8}
-    .kpi p{margin:2px 0 0 0; font-size:14px; font-weight:700}
-    .preset{display:flex; gap:8px; flex-wrap:wrap}
-    .preset button{background:#1e293b; color:#e5e7eb; border:1px solid #334155}
-    .legend{display:flex; gap:12px; flex-wrap:wrap; font-size:12px; opacity:.9}
-    .legend .dot{width:12px; height:12px; border-radius:50%;}
-    @media (max-width: 980px){
-      .app{grid-template-columns: 1fr; grid-template-rows: auto auto 1fr auto}
-      .right{grid-template-rows: 1fr 220px}
-    }
-  </style>
+  <title>Natural Selection Lab — Klar visning</title>
+  <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
   <div class="app">
-    <header>
+    <header class="bar">
       <div>
         <h1>Natural Selection Lab</h1>
-        <small>Simuler naturlig variasjon, seleksjon, mutasjon og omveltende hendelser.</small>
+        <small>Tydelig og tilgjengelig: form, hale, strektykkelse og kontrast viser egenskapene.</small>
       </div>
       <div class="btnbar">
         <button class="btn" id="playPause">Start</button>
-        <button class="btn ghost" id="stepGen">Steg (1 generasjon)</button>
+        <button class="btn ghost" id="stepGen">Steg (1 gen)</button>
         <button class="btn alt" id="resetBtn">Reset</button>
       </div>
     </header>
 
-    <aside class="left">
-      <div class="panel">
-        <div class="card">
-          <h2 style="margin:0 0 8px 0; font-size:16px">Populasjon & genetikk</h2>
-          <div class="row"><label>Antall individer: <b id="lblPop">120</b></label> <input id="popSize" type="range" min="20" max="300" step="10" value="120"></div>
-          <div class="row"><label>Mutasjonsrate (%): <b id="lblMut">4</b></label> <input id="mutation" type="range" min="0" max="20" step="1" value="4"></div>
-          <div class="row"><label>Arvbarhet (0–1): <b id="lblHer">0.6</b></label> <input id="heritability" type="range" min="0" max="1" step="0.05" value="0.6"></div>
-          <div class="row"><label>Generasjonslengde (ms): <b id="lblTick">900</b></label> <input id="tick" type="range" min="200" max="2000" step="100" value="900"></div>
-          <div class="tiny">Tips: høy mutasjon = rask variasjon, lav arvbarhet = mer «tilfeldig» avkom.</div>
-        </div>
+    <aside class="sidebar">
+      <section class="card">
+        <h2>Populasjon & genetikk</h2>
+        <div class="row"><label>Antall individer: <b id="lblPop">120</b></label><input id="popSize" type="range" min="20" max="300" step="10" value="120"></div>
+        <div class="row"><label>Mutasjonsrate (%): <b id="lblMut">4</b></label><input id="mutation" type="range" min="0" max="20" step="1" value="4"></div>
+        <div class="row"><label>Arvbarhet (0–1): <b id="lblHer">0.6</b></label><input id="heritability" type="range" min="0" max="1" step="0.05" value="0.6"></div>
+        <div class="row"><label>Generasjonslengde (ms): <b id="lblTick">900</b></label><input id="tick" type="range" min="200" max="2000" step="100" value="900"></div>
+        <div class="row"><label><input id="mono" type="checkbox"> Monokrom visning (tilgjengelighet)</label></div>
+      </section>
 
-        <div class="card">
-          <h2 style="margin:0 0 8px 0; font-size:16px">Miljø & seleksjon</h2>
-          <div class="row"><label>Miljøfarge (habitat)</label> <input id="envColor" type="color" value="#1f2a44"></div>
-          <div class="row"><label>Predatortrykk: <b id="lblPred">0.5</b></label> <input id="predation" type="range" min="0" max="1" step="0.05" value="0.5"></div>
-          <div class="row"><label>Mattilgang: <b id="lblFood">0.7</b></label> <input id="food" type="range" min="0" max="1" step="0.05" value="0.7"></div>
-          <div class="row"><label>Seleksjonsstyrke: <b id="lblSel">0.6</b></label> <input id="selection" type="range" min="0" max="1" step="0.05" value="0.6"></div>
+      <section class="card">
+        <h2>Miljø & seleksjon</h2>
+        <div class="row"><label>Miljøfarge</label><input id="envColor" type="color" value="#1f2a44"></div>
+        <div class="row"><label>Predatortrykk: <b id="lblPred">0.5</b></label><input id="predation" type="range" min="0" max="1" step="0.05" value="0.5"></div>
+        <div class="row"><label>Mattilgang: <b id="lblFood">0.7</b></label><input id="food" type="range" min="0" max="1" step="0.05" value="0.7"></div>
+        <div class="row"><label>Seleksjonsstyrke: <b id="lblSel">0.6</b></label><input id="selection" type="range" min="0" max="1" step="0.05" value="0.6"></div>
 
-          <div class="grid2" style="margin-top:8px">
-            <div class="row"><label>Størrelse viktig?</label> <input type="checkbox" id="traitSize" checked></div>
-            <div class="row"><label>Hastighet viktig?</label> <input type="checkbox" id="traitSpeed" checked></div>
-            <div class="row"><label>Kamuflasje viktig?</label> <input type="checkbox" id="traitColor" checked></div>
-            <div class="row"><label>Energi-kostnad for stor kropp</label> <input type="checkbox" id="costSize" checked></div>
-          </div>
-          <div class="tiny">Kamuflasje = lik farge som habitatet. Størrelse gir beskyttelse mot predatorer, men koster energi.</div>
+        <div class="grid2" style="margin-top:8px">
+          <label><input type="checkbox" id="traitSize" checked> Størrelse teller</label>
+          <label><input type="checkbox" id="traitSpeed" checked> Hastighet teller</label>
+          <label><input type="checkbox" id="traitColor" checked> Kamuflasje teller</label>
+          <label><input type="checkbox" id="costSize" checked> Energi-kost for stor kropp</label>
         </div>
+      </section>
 
-        <div class="card">
-          <h2 style="margin:0 8px 8px 0; font-size:16px; display:flex; align-items:center; gap:8px;">Omveltende hendelser</h2>
-          <div class="btnbar">
-            <button class="btn ghost" data-shock="drought">Tørke (lav mat)</button>
-            <button class="btn ghost" data-shock="newPred">Ny predator (høy risiko)</button>
-            <button class="btn ghost" data-shock="colorShift">Habitat skifter farge</button>
-            <button class="btn ghost" data-shock="coldSnap">Kaldt år (størrelse +)</button>
-            <button class="btn ghost" data-shock="abundance">Mye mat (kostnad −)</button>
-          </div>
-          <div class="tiny">Bruk hendelser for å illustrere hvordan miljøendringer driver evolusjon.</div>
+      <section class="card">
+        <h2>Omveltende hendelser</h2>
+        <div class="btnbar">
+          <button class="btn ghost" data-shock="drought">Tørke</button>
+          <button class="btn ghost" data-shock="newPred">Ny predator</button>
+          <button class="btn ghost" data-shock="colorShift">Habitat bytter farge</button>
+          <button class="btn ghost" data-shock="coldSnap">Kaldt år</button>
+          <button class="btn ghost" data-shock="abundance">Mye mat</button>
         </div>
+        <p class="tiny">Bruk disse for «aha-øyeblikk» i timen.</p>
+      </section>
 
-        <div class="card">
-          <h2 style="margin:0 0 8px 0; font-size:16px">Presets (klare opplegg)</h2>
-          <div class="preset">
-            <button class="btn presetBtn" data-preset="camouflage">Kamuflasje</button>
-            <button class="btn presetBtn" data-preset="speed">Fart redder liv</button>
-            <button class="btn presetBtn" data-preset="bigCold">Store kropper i kulde</button>
-            <button class="btn presetBtn" data-preset="tradeoff">Trade-off: stor vs rask</button>
-          </div>
+      <section class="card legend">
+        <h2>Hvordan lese figurene</h2>
+        <div class="legend-row">
+          <span class="shape demo circle"></span> Sirkel = størrelses-dominant
         </div>
-
-        <div class="card">
-          <h2 style="margin:0 0 8px 0; font-size:16px">Læringsforslag</h2>
-          <ul style="margin:0 0 0 16px; padding:0; line-height:1.5">
-            <li>La elevene forutsi: «Hvilken egenskap blir vanligere?» – kjør simulering, sjekk hypotesen.</li>
-            <li>Bruk <b>hendelser</b> midt i simuleringen. Diskutér hvordan «beste» egenskap skifter.</li>
-            <li>Plott gjennomsnitt/variasjon: pek på <i>naturlig variasjon</i> og <i>seleksjon</i>.</li>
-            <li>Snakk om <i>mutasjon</i>: øk rate – se raskere spredning i egenskaper.</li>
-          </ul>
+        <div class="legend-row">
+          <span class="shape demo triangle"></span> Trekant = farts-dominant (lengre hale = raskere)
         </div>
-      </div>
+        <div class="legend-row">
+          <span class="shape demo square"></span> Kvadrat = kamuflasje-dominant (matt = godt kamuflert)
+        </div>
+        <div class="legend-row">
+          <span class="bar-demo"><span class="bar-fill" style="width:66%"></span></span> Fitness-bar (høy = større sjanse for å bli forelder)
+        </div>
+      </section>
     </aside>
 
-    <main class="right">
-      <div class="card" style="position:relative">
+    <main class="main">
+      <div class="card stage">
         <canvas id="world" aria-label="Simulasjonsflate"></canvas>
-        <div style="position:absolute; top:8px; left:8px" class="legend">
-          <div><span class="dot" style="background:#9bd1ff"></span> høy hastighet</div>
-          <div><span class="dot" style="background:#ffd48a"></span> stor</div>
-          <div><span class="dot" style="background:#b6ffb3"></span> godt kamuflert</div>
-        </div>
+        <div id="banner" class="banner" aria-live="polite"></div>
+        <div id="tooltip" class="tooltip" role="dialog" aria-hidden="true"></div>
       </div>
-      <div class="card">
+
+      <div class="card kpis">
         <div class="kpi">
-          <div class="card">
-            <h3>Generasjon</h3>
-            <p id="kGen">0</p>
-          </div>
-          <div class="card">
-            <h3>Overlevelse (%)</h3>
-            <p id="kSurv">100</p>
-          </div>
-          <div class="card">
-            <h3>Snitt størrelse</h3>
-            <p id="kSize">0.50</p>
-          </div>
-          <div class="card">
-            <h3>Snitt hastighet</h3>
-            <p id="kSpeed">0.50</p>
-          </div>
-          <div class="card">
-            <h3>Snitt kamuflasje</h3>
-            <p id="kCamo">0.50</p>
-          </div>
+          <h3>Generasjon</h3><p id="kGen">0</p>
         </div>
-        <canvas id="chart" height="140" aria-label="Utviklingsgrafer"></canvas>
+        <div class="kpi">
+          <h3>Overlevelse (%)</h3><p id="kSurv">100</p>
+        </div>
+        <div class="kpi">
+          <h3>Snitt størrelse</h3><p id="kSize">0.50</p>
+        </div>
+        <div class="kpi">
+          <h3>Snitt hastighet</h3><p id="kSpeed">0.50</p>
+        </div>
+        <div class="kpi">
+          <h3>Snitt kamuflasje</h3><p id="kCamo">0.50</p>
+        </div>
+        <div class="kpi">
+          <h3>Fenotyper</h3>
+          <p><span id="countSize">0</span> ⭕︎ &nbsp; <span id="countSpeed">0</span> ▲ &nbsp; <span id="countCamo">0</span> ■</p>
+        </div>
       </div>
+      <canvas id="chart" height="160" aria-label="Utviklingsgrafer"></canvas>
     </main>
 
-    <footer>
-      <div>Bygget for klasserommet: <span class="tiny">naturlig variasjon → seleksjon → reproduksjon → evolusjon</span></div>
-      <div class="tiny">© Du kan fritt bruke, endre og dele. Ingen avhengigheter.</div>
+    <footer class="bar">
+      <div>Form → Dominerende egenskap | Hale → Hastighet | Strek → Størrelse | Kontrast → Kamuflasje</div>
+      <div class="tiny">Fri bruk og endring. Ingen avhengigheter.</div>
     </footer>
   </div>
 
-  <script type="module">
-    // ======= Verktøy =======
-    const lerp = (a,b,t)=>a+(b-a)*t;
-    const clamp=(x,lo=0,hi=1)=>Math.max(lo,Math.min(hi,x));
-    const rand=()=>Math.random();
-    const randN = ()=> {
-      // Box-Muller for omtrent normalfordelt N(0,1)
-      let u=0, v=0;
-      while(u===0) u=Math.random();
-      while(v===0) v=Math.random();
-      return Math.sqrt(-2.0*Math.log(u)) * Math.cos(2.0*Math.PI*v);
-    }
-    const mix = (a,b,w)=>a*(1-w)+b*w;
-
-    // ======= Dom =======
-    const qs = s=>document.querySelector(s);
-    const world = qs('#world');
-    const chart = qs('#chart');
-    const ctx = world.getContext('2d');
-    const cctx = chart.getContext('2d');
-
-    // ======= State =======
-    const state = {
-      running:false,
-      gen:0,
-      pop:[],
-      popSize:120,
-      mutation:0.04,
-      heritability:0.6,
-      tick:900,
-      envHue:220/360, // ~#1f2a44
-      envSat:0.4,
-      envLum:0.20,
-      predation:0.5,
-      food:0.7,
-      selection:0.6,
-      consider:{size:true, speed:true, color:true},
-      costs:{size:true},
-      history:[],
-    };
-
-    // ======= UI binding =======
-    const bindRange=(id, prop, fmt=(v)=>v)=>{
-      const el = qs(id);
-      const lbl = qs(`#lbl${el.id.charAt(0).toUpperCase()+el.id.slice(1)}`) || null;
-      const set=(v)=>{
-        state[prop]= (el.step && el.step.indexOf('.')>=0) ? parseFloat(v) : (el.id==='tick'?parseInt(v):parseFloat(v));
-        if(lbl) lbl.textContent = (el.id==='tick'? state[prop]: fmt(state[prop]));
-      };
-      set(el.value);
-      el.addEventListener('input', e=>set(e.target.value));
-    };
-
-    bindRange('#popSize','popSize', v=>parseInt(v));
-    bindRange('#mutation','mutation', v=>parseInt(v));
-    bindRange('#heritability','heritability', v=>(+v).toFixed(2));
-    bindRange('#tick','tick', v=>parseInt(v));
-    bindRange('#predation','predation', v=>(+v).toFixed(2));
-    bindRange('#food','food', v=>(+v).toFixed(2));
-    bindRange('#selection','selection', v=>(+v).toFixed(2));
-
-    // Farge
-    const envColor = qs('#envColor');
-    const setEnvFromHex = (hex)=>{
-      // konverter til HSL (enkel omtrentlig)
-      const c = hex.replace('#','');
-      const r = parseInt(c.substring(0,2),16)/255;
-      const g = parseInt(c.substring(2,4),16)/255;
-      const b = parseInt(c.substring(4,6),16)/255;
-      const max = Math.max(r,g,b), min = Math.min(r,g,b);
-      let h,s,l=(max+min)/2;
-      if(max===min){h=s=0;} else {
-        const d=max-min;
-        s = l>0.5 ? d/(2-max-min) : d/(max+min);
-        switch(max){
-          case r: h=(g-b)/d+(g<b?6:0); break;
-          case g: h=(b-r)/d+2; break;
-          case b: h=(r-g)/d+4; break;
-        }
-        h/=6;
-      }
-      state.envHue=h; state.envSat=s; state.envLum=l;
-    };
-    setEnvFromHex(envColor.value);
-    envColor.addEventListener('input', e=>setEnvFromHex(e.target.value));
-
-    // Trait toggles
-    const tSize=qs('#traitSize'), tSpeed=qs('#traitSpeed'), tColor=qs('#traitColor'), cSize=qs('#costSize');
-    const updateToggles=()=>{
-      state.consider.size = tSize.checked;
-      state.consider.speed = tSpeed.checked;
-      state.consider.color = tColor.checked;
-      state.costs.size = cSize.checked;
-    };
-    [tSize,tSpeed,tColor,cSize].forEach(el=>el.addEventListener('change', updateToggles));
-    updateToggles();
-
-    // ======= Individ =======
-    class Critter{
-      constructor({size,speed,colorHue}={}){
-        // egenskaper i [0..1]
-        this.size = size ?? clamp(0.5 + 0.25*randN());
-        this.speed = speed ?? clamp(0.5 + 0.25*randN());
-        this.colorHue = colorHue ?? clamp(state.envHue + 0.2*randN());
-        // posisjon og bevegelse
-        this.x = Math.random();
-        this.y = Math.random();
-        this.vx = (rand()*2-1)*0.002*(0.5+this.speed);
-        this.vy = (rand()*2-1)*0.002*(0.5+this.speed);
-      }
-      step(){
-        this.x = clamp(this.x + this.vx,0,1);
-        this.y = clamp(this.y + this.vy,0,1);
-        if(this.x<=0||this.x>=1) this.vx*=-1;
-        if(this.y<=0||this.y>=1) this.vy*=-1;
-      }
-    }
-
-    // ======= Populasjon =======
-    function initPopulation(n){
-      state.pop = Array.from({length:n}, ()=> new Critter({}));
-      state.gen = 0;
-      state.history = [];
-      pushHistory();
-      draw();
-      drawChart();
-    }
-
-    // Fitness: kombiner komponenter
-    function fitness(cr){
-      let f = 1.0;
-
-      // 1) Predatortrykk: større og raskere har fordeler, men størrelse koster energi
-      if(state.consider.size){
-        const sizeProtection = lerp(0.8, 1.25, cr.size); // større = mer beskyttelse
-        f *= mix(1.0, sizeProtection, state.predation);
-        if(state.costs.size){
-          // energikost: påvirkes av mattilgang (mer mat = lavere kost)
-          const cost = lerp(1.0, 0.7, cr.size); // stor -> lavere faktor
-          const adj = lerp(1.0, cost, 1.0 - state.food);
-          f *= adj;
-        }
-      }
-      if(state.consider.speed){
-        const speedEscape = lerp(0.85, 1.3, cr.speed);
-        f *= mix(1.0, speedEscape, state.predation);
-      }
-
-      // 2) Kamuflasje: farge lik miljøets hue
-      if(state.consider.color){
-        const dh = Math.min(Math.abs(cr.colorHue - state.envHue), 1 - Math.abs(cr.colorHue - state.envHue));
-        const camo = lerp(1.3, 0.7, clamp(dh*4)); // nær hue => bedre
-        f *= camo;
-      }
-
-      // 3) Seleksjonsstyrke skalerer hvor mye forskjeller teller
-      return Math.max(0.001, Math.pow(f, 0.5 + state.selection));
-    }
-
-    // Reproduksjon med utvalg: roulette-wheel på fitness
-    function nextGeneration(){
-      const pop = state.pop;
-      const fit = pop.map(fitness);
-      const total = fit.reduce((a,b)=>a+b,0);
-      const survRate = clamp( (fit.filter(x=>x>1).length / fit.length) , 0, 1);
-      const probs = fit.map(f=>f/total);
-
-      const newPop=[];
-      for(let i=0;i<state.popSize;i++){
-        // velg forelder (enkelt): proporsjonalt fitness
-        const idx = sampleIndex(probs);
-        const p = pop[idx];
-
-        // arv + mutasjon
-        const child = new Critter({
-          size: mutate( inherit(p.size) ),
-          speed: mutate( inherit(p.speed) ),
-          colorHue: clamp( mutate( inherit(p.colorHue), 0.06) )
-        });
-        newPop.push(child);
-      }
-      state.pop = newPop;
-      state.gen += 1;
-
-      // logg
-      pushHistory(survRate);
-    }
-
-    function inherit(val){
-      // bland forelder med «miljøstøy»: heritability styrer hvor mye som arves
-      const h=state.heritability;
-      return clamp( h*val + (1-h)*(0.5 + 0.25*randN()) );
-    }
-
-    function mutate(val, scale=0.12){
-      const r = state.mutation/100;
-      if(Math.random() < r){
-        return clamp( val + randN()*scale );
-      }
-      return val;
-    }
-
-    function sampleIndex(prob){
-      let r=Math.random(), s=0;
-      for(let i=0;i<prob.length;i++){ s+=prob[i]; if(r<=s) return i; }
-      return prob.length-1;
-    }
-
-    // ======= Tegning =======
-    function resize(){
-      const dpr = Math.max(1, window.devicePixelRatio||1);
-      const w = world.clientWidth, h = world.clientHeight;
-      world.width = Math.floor(w*dpr);
-      world.height= Math.floor(h*dpr);
-      ctx.setTransform(dpr,0,0,dpr,0,0);
-
-      const cw = chart.clientWidth, ch = chart.clientHeight;
-      chart.width = Math.floor(cw*dpr);
-      chart.height= Math.floor(ch*dpr);
-      cctx.setTransform(dpr,0,0,dpr,0,0);
-    }
-    window.addEventListener('resize', ()=>{resize(); draw(); drawChart();});
-    resize();
-
-    function worldBg(){
-      // bakgrunn = miljøfarge
-      const h=state.envHue, s=state.envSat, l=state.envLum;
-      ctx.fillStyle = `hsl(${(h*360).toFixed(1)} ${Math.round(s*100)}% ${Math.round(l*100)}%)`;
-      ctx.fillRect(0,0,world.clientWidth,world.clientHeight);
-    }
-
-    function draw(){
-      worldBg();
-      const w=world.clientWidth, h=world.clientHeight;
-      for(const cr of state.pop){
-        cr.step();
-
-        // visuell miks av egenskaper:
-        // - outline/størrelse: kroppsstørrelse
-        // - fyll: bland kamuflasjegrad med hastighet (glød)
-        const r = lerp(2, 10, cr.size);
-        const dh = Math.min(Math.abs(cr.colorHue - state.envHue), 1 - Math.abs(cr.colorHue - state.envHue));
-        const camoScore = 1 - clamp(dh*4);
-        const speedGlow = cr.speed;
-
-        const fillHue = lerp(state.envHue, cr.colorHue, 0.5);
-        const sat = lerp(30, 70, camoScore);
-        const lum = lerp(30, 60, speedGlow);
-
-        ctx.beginPath();
-        ctx.arc(cr.x*w, cr.y*h, r, 0, Math.PI*2);
-        ctx.fillStyle = `hsl(${(fillHue*360).toFixed(0)} ${sat}% ${lum}%)`;
-        ctx.fill();
-        ctx.lineWidth = 1;
-        ctx.strokeStyle = `rgba(255,212,138,0.5)`; // gulish for size hint
-        ctx.stroke();
-      }
-    }
-
-    // ======= Grafer =======
-    function pushHistory(survRate=1){
-      const avg = (arr)=>arr.reduce((a,b)=>a+b,0)/arr.length;
-      const sd  = (arr)=>Math.sqrt(avg(arr.map(x=>(x-avg(arr))**2)));
-
-      const sizes = state.pop.map(p=>p.size);
-      const speeds= state.pop.map(p=>p.speed);
-      const camo  = state.pop.map(p=>{
-        const d = Math.min(Math.abs(p.colorHue - state.envHue), 1 - Math.abs(p.colorHue - state.envHue));
-        return 1 - clamp(d*4);
-      });
-
-      state.history.push({
-        gen: state.gen,
-        surv: Math.round(survRate*100),
-        size: {mean: avg(sizes), sd: sd(sizes)},
-        speed:{mean: avg(speeds), sd: sd(speeds)},
-        camo: {mean: avg(camo), sd: sd(camo)},
-      });
-
-      // KPI
-      qs('#kGen').textContent = state.gen;
-      qs('#kSurv').textContent= state.history.at(-1).surv;
-      qs('#kSize').textContent= state.history.at(-1).size.mean.toFixed(2);
-      qs('#kSpeed').textContent= state.history.at(-1).speed.mean.toFixed(2);
-      qs('#kCamo').textContent= state.history.at(-1).camo.mean.toFixed(2);
-    }
-
-    function drawChart(){
-      const w = chart.clientWidth, h = chart.clientHeight;
-      cctx.clearRect(0,0,w,h);
-      if(state.history.length<2) return;
-
-      const gens = state.history.map(d=>d.gen);
-      const sMean= state.history.map(d=>d.size.mean);
-      const vMean= state.history.map(d=>d.speed.mean);
-      const cMean= state.history.map(d=>d.camo.mean);
-
-      // akser
-      cctx.lineWidth=1;
-      cctx.strokeStyle='rgba(255,255,255,0.15)';
-      cctx.beginPath();
-      cctx.moveTo(30,10); cctx.lineTo(30,h-20); cctx.lineTo(w-10,h-20);
-      cctx.stroke();
-
-      // plott helper
-      const plotLine=(vals, color)=>{
-        const xmin=gens[0], xmax=gens.at(-1);
-        const x = g=> lerp(30, w-10, (g - xmin)/Math.max(1,(xmax-xmin)));
-        const y = v=> lerp(h-20, 10, v); // 0..1 til pixel
-        cctx.beginPath();
-        vals.forEach((v,i)=>{
-          const gx= x(gens[i]), gy=y(v);
-          if(i===0) cctx.moveTo(gx,gy); else cctx.lineTo(gx,gy);
-        });
-        cctx.strokeStyle=color;
-        cctx.lineWidth=2;
-        cctx.stroke();
-      };
-
-      plotLine(sMean,'#ffd48a'); // size
-      plotLine(vMean,'#9bd1ff'); // speed
-      plotLine(cMean,'#b6ffb3'); // camo
-    }
-
-    // ======= Løpende sim =======
-    let timer=null;
-    function loopOnce(){
-      nextGeneration();
-      draw();
-      drawChart();
-    }
-    function start(){
-      if(state.running) return;
-      state.running=true;
-      qs('#playPause').textContent='Pause';
-      timer = setInterval(loopOnce, state.tick);
-    }
-    function pause(){
-      state.running=false;
-      qs('#playPause').textContent='Start';
-      clearInterval(timer);
-    }
-
-    // ======= Hendelser =======
-    function shock(type){
-      switch(type){
-        case 'drought':
-          state.food = Math.max(0.2, state.food - 0.4);
-          qs('#lblFood').textContent=state.food.toFixed(2);
-          qs('#food').value = state.food;
-          break;
-        case 'newPred':
-          state.predation = clamp(state.predation + 0.3, 0, 1);
-          qs('#lblPred').textContent=state.predation.toFixed(2);
-          qs('#predation').value = state.predation;
-          break;
-        case 'colorShift':
-          // skift habitatet 120 grader i hue
-          state.envHue = (state.envHue + 1/3) % 1;
-          // speil i fargeplukker
-          // lag en hex å vise (enkel HSL->RGB)
-          const hex = hslToHex(state.envHue, state.envSat, state.envLum);
-          envColor.value = hex;
-          break;
-        case 'coldSnap':
-          // gjør stor kropp ekstra fordelaktig: øk seleksjon + litt predation
-          state.selection = clamp(state.selection + 0.2,0,1);
-          state.predation = clamp(state.predation + 0.1,0,1);
-          qs('#lblSel').textContent=state.selection.toFixed(2);
-          qs('#selection').value=state.selection;
-          qs('#lblPred').textContent=state.predation.toFixed(2);
-          qs('#predation').value=state.predation;
-          break;
-        case 'abundance':
-          state.food = clamp(state.food + 0.4, 0, 1);
-          qs('#lblFood').textContent=state.food.toFixed(2);
-          qs('#food').value=state.food;
-          break;
-      }
-      draw(); // oppdater bakgrunn ved fargeskift
-    }
-
-    function hslToHex(h,s,l){
-      // h,s,l in [0..1]
-      const a = s*Math.min(l,1-l);
-      const f = (n)=>{
-        const k = (n + h*12) % 12;
-        const color = l - a*Math.max(-1, Math.min(k-3, Math.min(9-k,1)));
-        return Math.round(255*color).toString(16).padStart(2,'0');
-      }
-      return `#${f(0)}${f(8)}${f(4)}`;
-    }
-
-    // ======= Presets =======
-    const applyPreset=(name)=>{
-      if(name==='camouflage'){
-        state.predation=0.4; state.food=0.8; state.selection=0.7;
-        state.consider={size:false, speed:false, color:true};
-      } else if(name==='speed'){
-        state.predation=0.8; state.food=0.6; state.selection=0.7;
-        state.consider={size:false, speed:true, color:false};
-      } else if(name==='bigCold'){
-        state.predation=0.5; state.food=0.6; state.selection=0.75;
-        state.consider={size:true, speed:false, color:false};
-        state.costs.size=true;
-      } else if(name==='tradeoff'){
-        state.predation=0.6; state.food=0.5; state.selection=0.65;
-        state.consider={size:true, speed:true, color:false};
-        state.costs.size=true;
-      }
-      // synk til UI
-      qs('#lblPred').textContent=state.predation.toFixed(2);
-      qs('#predation').value=state.predation;
-      qs('#lblFood').textContent=state.food.toFixed(2);
-      qs('#food').value=state.food;
-      qs('#lblSel').textContent=state.selection.toFixed(2);
-      qs('#selection').value=state.selection;
-      tSize.checked=state.consider.size;
-      tSpeed.checked=state.consider.speed;
-      tColor.checked=state.consider.color;
-      cSize.checked=state.costs.size;
-      updateToggles();
-    };
-
-    // ======= Kontroller =======
-    qs('#playPause').addEventListener('click', ()=> state.running? pause(): start());
-    qs('#stepGen').addEventListener('click', ()=>{ pause(); loopOnce(); });
-    qs('#resetBtn').addEventListener('click', ()=>{
-      pause();
-      initPopulation(state.popSize);
-    });
-    document.querySelectorAll('[data-shock]').forEach(btn=>{
-      btn.addEventListener('click', ()=>shock(btn.dataset.shock));
-    });
-    document.querySelectorAll('.presetBtn').forEach(btn=>{
-      btn.addEventListener('click', ()=>{ applyPreset(btn.dataset.preset); draw(); });
-    });
-
-    // Start
-    initPopulation(state.popSize);
-
-    // ======= Ekstra: lagre/les presets som JSON (valgfritt å bruke) =======
-    // window.exportPreset = ()=>JSON.stringify(state, (k,v)=>{
-    //   if(['pop','history','running'].includes(k)) return undefined;
-    //   return v;
-    // },2);
-    // window.importPreset = (json)=>{
-    //   const s = JSON.parse(json);
-    //   Object.assign(state, s);
-    //   updateToggles();
-    //   initPopulation(state.popSize);
-    // };
-  </script>
+  <script type="module" src="./sim.js"></script>
 </body>
 </html>
